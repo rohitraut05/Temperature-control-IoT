@@ -1,0 +1,69 @@
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <DHT.h>
+
+#define DHTPIN 5        // Pin for DHT11 data line
+#define DHTTYPE DHT11   // DHT sensor type
+
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 64  // OLED display height, in pixels
+
+// Initialize the OLED display with the I2C address
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+DHT dht(DHTPIN, DHTTYPE); // Initialize the DHT sensor
+
+const int fanPin = 6;     // Pin for controlling the fan
+
+void setup() {
+  pinMode(fanPin, OUTPUT);  // Set fanPin as an output
+
+  // Initialize the OLED display
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("Temperature & Fan");
+  display.display();
+
+  // Initialize the DHT sensor
+  dht.begin();
+}
+
+void loop() {
+  // Read temperature and humidity from the DHT sensor
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  // Check if any reads failed
+  if (isnan(temperature) || isnan(humidity)) {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("Failed to read DHT sensor!");
+    display.display();
+    delay(2000);
+    return;
+  }
+
+  // Display temperature and humidity on the OLED display
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Temp: ");
+  display.print(temperature);
+  display.print("C");
+  display.setCursor(0, 16);
+  display.print("Humidity: ");
+  display.print(humidity);
+  display.print("%");
+  display.display();
+
+  // Check if the temperature is above the threshold (30 degrees)
+  if (temperature > 30) {
+    digitalWrite(fanPin, HIGH);  // Turn on the fan
+  } else {
+    digitalWrite(fanPin, LOW);   // Turn off the fan
+  }
+
+  delay(2000);
+}
